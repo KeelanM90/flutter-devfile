@@ -1,0 +1,74 @@
+schemaVersion: 2.0.0
+metadata:
+  name: flutter
+  version: 1.0.0
+components:
+  - name: tools
+    container:
+      image: ubuntu:20.04
+      memoryLimit: 2Gi
+      mountSources: true
+      sourceMapping: /project
+      endpoints:
+        - name: dev
+          targetPort: 8080
+      env:
+        - name: FLUTTER_HOME
+          value: /opt/flutter
+        - name: PATH
+          value: /opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+  - name: flutter-sdk
+    volume:
+      size: 2Gi
+
+commands:
+  - id: flutter-setup
+    exec:
+      component: tools
+      commandLine: >
+        apt-get update && \
+        apt-get install -y curl git unzip xz-utils zip libglu1-mesa && \
+        curl -LO https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/flutter_linux_2.10.5-stable.tar.xz && \
+        tar xf flutter_linux_2.10.5-stable.tar.xz -C /opt/ && \
+        /opt/flutter/bin/flutter config --no-analytics && \
+        /opt/flutter/bin/flutter doctor
+      workingDir: /project
+      group:
+        kind: build
+        isDefault: true
+
+  - id: flutter-get
+    exec:
+      component: tools
+      commandLine: flutter pub get
+      workingDir: /project
+      group:
+        kind: build
+        isDefault: true
+
+  - id: flutter-run
+    exec:
+      component: tools
+      commandLine: flutter run
+      workingDir: /project
+      group:
+        kind: run
+        isDefault: true
+
+  - id: flutter-test
+    exec:
+      component: tools
+      commandLine: flutter test
+      workingDir: /project
+      group:
+        kind: test
+        isDefault: true
+
+  - id: setup-volume
+    exec:
+      component: tools
+      commandLine: mkdir -p /opt/flutter
+      workingDir: /project
+      group:
+        kind: build
